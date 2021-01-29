@@ -400,12 +400,20 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 	def test_connection(self, plugip, username, password):
 		self._taposmartplug_logger.debug("Testing connection to %s." % plugip)
 		if plugip != "" and username != "" and password != "":
-			retval = "success"
-			p100 = PyP100.P100(plugip, username, password) #Creating a P100 plug object
-			p100.handshake() #Creates the cookies required for further methods 
-			p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
+			try:
+				p100 = PyP100.P100(plugip, username, password) #Creating a P100 plug object
+			except:
+				return "Failed to create object"
+			try:
+				p100.handshake() #Creates the cookies required for further methods 
+			except:
+				return "Handshake failed - incorrect IP address?"
+			try:
+				p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
+			except:
+				return "Could not login - invalid credentials?"
 
-			return retval
+			return "Success"
 
 	def check_status(self, plugip):
 		self._taposmartplug_logger.debug("Checking status of %s." % plugip)
