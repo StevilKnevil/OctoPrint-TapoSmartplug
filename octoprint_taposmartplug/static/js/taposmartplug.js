@@ -244,6 +244,15 @@ $(function() {
 			$("#TapoPlugEditor").modal("show");
 		}
 
+		self.testPlug = function(data) {
+			$.ajax({
+				url: API_BASEURL + "plugin/taposmartplug?testConnection="+data.ip()+"&username="+data.username()+"&password="+data.password(),
+				type: "GET"
+			}).done(function(data){
+					console.log(data);
+				});			
+		}
+
 		self.addPlug = function() {
 			self.selectedPlug({'ip':ko.observable(''),
 								'label':ko.observable(''),
