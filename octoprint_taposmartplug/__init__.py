@@ -397,6 +397,16 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 			chk = self.check_status(plug["ip"], plug["username"], plug["password"])
 			self._plugin_manager.send_plugin_message(self._identifier, chk)
 
+	def test_connection(self, plugip, username, password):
+		self._taposmartplug_logger.debug("Testing connection to %s." % plugip)
+		if plugip != "" and username != "" and password != "":
+			retval = "success"
+			p100 = PyP100.P100(plugip, username, password) #Creating a P100 plug object
+			p100.handshake() #Creates the cookies required for further methods 
+			p100.login() #Sends credentials to the plug and creates AES Key and IV for further methods
+
+			return retval
+
 	def check_status(self, plugip):
 		self._taposmartplug_logger.debug("Checking status of %s." % plugip)
 		if plugip != "":
@@ -425,6 +435,7 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		return dict(
 			turnOn=["ip"],
 			turnOff=["ip"],
+			testConnection=["ip","username","password"],
 			checkStatus=["ip"],
 			enableAutomaticShutdown=[],
 			disableAutomaticShutdown=[],
@@ -432,6 +443,9 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 
 	def on_api_get(self, request):
 		self._taposmartplug_logger.debug(request.args)
+		if request.args.get("testConnection"):
+			response = self.test_connection(request.args.get("testConnection"),request.args.get("username"),request.args.get("password"))
+			return flask.jsonify(response)
 		if request.args.get("checkStatus"):
 			response = self.check_status(request.args.get("checkStatus"))
 			return flask.jsonify(response)
@@ -446,6 +460,8 @@ class taposmartplugPlugin(octoprint.plugin.SettingsPlugin,
 		elif command == 'turnOff':
 			response = self.turn_off("{ip}".format(**data))
 			self._plugin_manager.send_plugin_message(self._identifier, response)
+		elif command == 'testConnection':
+			response = self.test_connection("{ip}".format(**data), "{username}".format(**data), "{password}".format(**data))
 		elif command == 'checkStatus':
 			response = self.check_status("{ip}".format(**data))
 		elif command == 'enableAutomaticShutdown':
